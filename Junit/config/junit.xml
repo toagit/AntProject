@@ -7,11 +7,67 @@
       <pathelement location="${path.antcontrib}"
     </classpath>
   </taskdef>
+
   <target name="path.convert">
     <propertyregex property="pkg.class" input=${class} regexp="Test" replace="" global="true" />
     <propertyregex property="path.class" input=${pkg.class} regexp="\." replace="\\\" global="true" />
     <echo>${path.class}</echo>
-  </target>  
+  </target>
 
+  <!-- JUnit実行 -->
+  <target name="test.dev" description="Execute Test Development Resource">
+    <echo>#########################################</echo>
+    <echo>### Execute Test Development Resource ###</echo>
+    <echo>${ant.java.version}</echo>
+    <echo>${class}</echo>
+    <echo>#########################################</echo>
+    <!-- 必要なリソースは一まとめにする -->
+    <path id="classpath">
+      <pathelement location="${workspace}/projectA/bin" />
+      <pathelement location="${workspace}/projectB/bin" />
+      <fileset dir="${path.lib}">
+        <include name="*.jar" />
+      </fileset>
+    </path>
 
+    <junit printsummary="yes">
+      <classpath>
+        <path refid="classpath" />
+      </classpath>
+      <formatter type="xml" />
+      <test name="${class}" todir=${path.out} />
+    </junit>
+  </target>
+
+  <target name="test.product" description="Execute Test Production Resource">
+    <echo>#########################################</echo>
+    <echo>### Execute Test Development Resource ###</echo>
+    <echo>${ant.java.version}</echo>
+    <echo>${class}</echo>
+    <echo>#########################################</echo>
+    <!-- テスト対象リソースのみ稼動系を使用するため、jarを生成 -->
+    <jar destfile="${path.lib}/product.jar">
+      <fileset dir="${workspace}/projectX/bin" includes="${path.class}.class" />
+      <fileset dir="${workspace}/projectY/bin" includes="${path.class}.class" />
+      <fileset dir="${workspace}/projectZ/bin" includes="${path.class}.class" />
+    </jar>
+    <jar destfile="${path.lib}/dev.jar">
+      <fileset dir="${workspace}/projectA/bin" excludes="${path.class}.class" />
+      <fileset dir="${workspace}/projectB/bin" excludes="${path.class}.class" />
+    </jar>
+    <!-- 必要なリソースは一まとめにする -->
+    <path id="classpath">
+      <fileset dir="${path.lib}">
+        <include name="*.jar" />
+      </fileset>
+    </path>
+
+    <junit printsummary="yes">
+      <classpath>
+        <path refid="classpath" />
+      </classpath>
+      <formatter type="xml" />
+      <test name="${class}" todir=${path.out} />
+    </junit>
+  </target>
 </project>
