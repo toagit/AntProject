@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="Windows-31J"?>
+<project name="junitReport" default="report" basedir=".">
+  <discription></discription>
+  <property file="config.properties"/>
+  <!--
+  scriptタグの特性？でscriptタグ内でのカレントパスがxmlの呼び出し元となるため、
+  プロパティファイルから読み込んだ相対パスが想定どおりに展開されない。
+  そのため、プロパティファイルを使用する際は以下の対応が必要。
+  A)basedirを「..」ルートにする。
+  　antのアーキテクチャはルートが前提？
+
+  B)絶対パスを取得できるようにプロパティをlocationで再定義する。
+  <property name="path.lib" location="${dir.lib}" />
+  -->
+  <property name="path.lib" location="../lib" />
+  <property name="path.out" location="../out" />
+  <property name="path.js" location="../js" />
+  <property name="reportName" value="" />
+  <property name="jpName" value="" />
+
+  <target name="clean" description="" unless="doClean"
+    <delete dir="${path.out}" />
+    <mkdir dir="${path.out}" />
+  </target>
+
+  <!-- JUnit実行 -->
+  <target name="test.dev" depends="clean" description="Execute test deveropment">
+    <ant antfile="./Junit.xml" target="test.dev"/>
+  </target>
+
+  <target name="test.product" depends="clean" description="Execute test product">
+    <ant antfile="./Junit.xml" target="test.product"/>
+  </target>
+
+  <!-- レポート出力（フレームなし） -->
+  <target name="report">
+    <echo> ##### Output report ##### </echo>
+    <junitReport todir="${path.out}">
+      <fileset dir="${path.out}">
+        <include name="TEST-*.xml" />
+      </fileset>
+      <report format="noframes" todir="${path.out}" />
+    </junitReport>
+    <script language="javascript" src="${path.js}/EditReport.js">
+      var path = project.getProperty("path.out");
+      project.setProperty("reportName", cutScript(path + "/junit-noframes.html"));
+    </script>
+    <script language="javascript" src="${path.js}/ConvertPkgName.js">
+      var after = getJpNameSuffix(project.getProperty("class"));
+      project.setProperty("jpName", after);
+    </script>
+    <move file="${reportName}" tofile="${path.out}/JUitReport${jpName}(${class}).html" />
+  </target>
+
+  <!-- レポート出力（フレームあり） -->
+  <target name="report.frame">
+    <echo> ##### Output report frame ##### </echo>
+    <script language="javascript" src="${path.js}/ConvertPkgName.js">
+      var after = getJpNameSuffix(project.getProperty("class"));
+      project.setProperty("jpName", after);
+    </script>
+    <junitReport todir="${path.out}">
+      <fileset dir="${path.out}">
+        <include name="TEST-*.xml" />
+      </fileset>
+      <report format="frames" todir="${path.out}/JUitReport${jpName}(${class})" />
+    </junitReport>
+  </target>
+</project>
